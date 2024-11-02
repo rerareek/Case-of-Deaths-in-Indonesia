@@ -7,10 +7,10 @@ Our model, which uses "Total Death" and "Year" as input features, demonstrated a
 ## Highlights and Results:
 Feature Selection: The model relies on "Total Death" and "Year" as input features, balancing simplicity with predictive strength.
 Performance Metrics:
-- True Positives (7): Correctly predicted as "Natural Disasters."
-- False Negatives (16): Misclassified as "Non-Natural Disasters and Diseases" when they should be "Natural Disasters."
-- False Positives (20): Misclassified as "Natural Disasters" when they should be "Non-Natural Disasters and Diseases."
-- True Negatives (89): Correctly predicted as "Non-Natural Disasters and Diseases."
+- **True Positives (7)**: Correctly predicted as "Natural Disasters."
+- **False Negatives (16)**: Misclassified as "Non-Natural Disasters and Diseases" when they should be "Natural Disasters."
+- **False Positives (20)**: Misclassified as "Natural Disasters" when they should be "Non-Natural Disasters and Diseases."
+- **True Negatives (89)**: Correctly predicted as "Non-Natural Disasters and Diseases."
 
 While the model achieved solid accuracy, further assessments for potential overfitting or underfitting are recommended to validate and refine its reliability. With these additional evaluations, we can gain deeper insights into the model's performance and uncover areas for optimization.
 
