@@ -1,4 +1,4 @@
-# Case-of-Deaths-in-Indonesia
+# Cases-of-Deaths-in-Indonesia
 
 This repository showcases our group research project focused on analyzing and predicting causes of death in Indonesia. Leveraging historical data on total deaths across multiple years, we utilized a structured approach including Exploratory Data Analysis (EDA), data preprocessing, and machine learning model development to build an accurate predictive model.
 
