@@ -1,0 +1,403 @@
+---
+title: "FINAL PROJECT DMV Team 6"
+author: "Marchel C Wuisang"
+date: "2023-06-14"
+output: html_document
+---
+
+
+## CLASSIFICATION TYPE OF DISASTER BASED ON TOTAL DEATH & YEAR IN INDONESIA USING DECISION TREE.
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Link dataset:
+https://github.com/frengkielistanto/Penyebab-Kematian-di-Indonesia-tahun-2000-2022/blob/master/Penyebab%20Kematian%20di%20Indonesia%20yang%20Dilaporkan%20-%20Clean.csv 
+
+```{r}
+getwd()
+```
+```{r}
+setwd("D:/Kuliah s4/DM&V/Project/work/New/Final")
+```
+Setting working directory
+
+```{r}
+data <- read.csv("Penyebab Kematian di Indonesia 2000 - 2022.csv")
+```
+Proses load dataset yang akan digunakan.
+
+Description dataset (original):
+  Berisi data yang dikompilasi dari Profil Kesehatan Indonesia Tahun 2004 s.d Tahun 2022 dan data COVID-19. URL sumber data tercantum pada kolom "Source URL". Kolom "Type" (Jenis Penyebab Kematian) diisi oleh saya sendiri, tidak berasal dari sumber yang telah disebutkan, namun terinspirasi dari Profil Kesehatan Indonesia Tahun 2019 yang membagi Krisis Kesehatan menurut Jenis Bencana, yaitu Bencana Sosial, Bencana Alam, dan Bencana Non Alam. Dalam konteks dataset ini, saya menggunakan 3 jenis seperti itu tapi sedikit dimodifikasi, yaitu menjadi: "Bencana Sosial", "Bencana Alam", dan "Bencana Non Alam dan Penyakit".
+
+Description dataset (translated):
+  Contains data compiled from the Indonesian Health Profile from 2004 to 2022 and COVID-19 data. The URL of the data source is listed in the "Source URL" column. The "Type" column (Type of Cause of Death) is filled in by myself, not from the sources mentioned, but inspired by the 2019 Indonesian Health Profile which divides Health Crises by Disaster Type, namely Social Disasters, Natural Disasters, and Non-Natural Disasters. In the context of this dataset, I used those 3 types but modified them slightly, which became: "Social Disasters", "Natural Disasters", and "Non-Natural Disasters and Diseases".
+  
+Variable description:
+
+-. Cause: Penyebab Kematian (character)
+
+-. Type: Jenis Penyebab Kematian (character)
+
+-. Year: Tahun Kejadian (integer)
+
+-. Data Redundancy: Redundansi data untuk penyebab kematian di tahun yang sama(integer)
+
+-. Total Deaths: Jumlah total kematian (integer)
+
+-. Source: Sumber Data (character)
+
+-. Page at Source: Halaman pada sumber data (character)
+
+-. Source URL: URL Sumber data (character)
+
+
+# EDA1
+```{r}
+dim(data)
+```
+dimension of the dataset
+
+```{r}
+head(data,10)
+```
+
+preview dataset
+
+```{r}
+BasicSummary <- function(df, dgts = 3){
+m <- ncol(df)
+varNames <- colnames(df)
+varType <- vector("character",m)
+topLevel <- vector("character",m)
+topCount <- vector("numeric",m)
+missCount <- vector("numeric",m)
+levels <- vector("numeric", m)
+for (i in 1:m){
+x <- df[,i]
+varType[i] <- class(x)
+xtab <- table(x, useNA = "ifany")
+levels[i] <- length(xtab)
+nums <- as.numeric(xtab)
+maxnum <- max(nums)
+topCount[i] <- maxnum
+maxIndex <- which.max(nums)
+lvls <- names(xtab)
+topLevel[i] <- lvls[maxIndex]
+missIndex <- which((is.na(x)) | (x == "") | (x == " "))
+missCount[i] <- length(missIndex)
+}
+n <- nrow(df)
+topFrac <- round(topCount/n, digits = dgts)
+missFrac <- round(missCount/n, digits = dgts)
+summaryFrame <- data.frame(variable = varNames, type = varType,
+levels = levels, topLevel = topLevel,
+topCount = topCount, topFrac = topFrac,
+missFreq = missCount, missFrac = missFrac)
+return(summaryFrame)
+}
+```
+
+Descriptive and characteristics of dataset
+
+```{r}
+BasicSummary(data)
+```
+```{r}
+#View(BasicSummary(data))
+```
+
+There is an issue in this dataset, which is that there are NA values in some character variables that have no useful value.
+
+```{r}
+mynew_data <- data[c('Type', 'Year', 'Total.Deaths')]
+```
+Drop the 'source', 'cause', 'Page.at.Source', 'Source.URL' variables because they have the type of character. 
+And the 'type' variable will be the target label.
+
+```{r}
+mynew_data$Type <- as.factor(mynew_data$Type)
+mynew_data$Year <- as.numeric(mynew_data$Year)
+mynew_data$Total.Deaths <- as.numeric(mynew_data$Total.Deaths)
+```
+Change the data type of the features where the target variable becomes a factor, and the rest are numeric. 
+The target uses factors because it is more informative for non-numeric variables and can also be used in classification tasks.
+
+
+```{r}
+BasicSummary(mynew_data)
+```
+solved problem
+
+```{r}
+pop_values <- ifelse(mynew_data$Year == 2000, 214072421, ifelse(mynew_data$Year == 2001, 217112437, ifelse(mynew_data$Year == 2002,220115092, ifelse(mynew_data$Year == 2003,223080121, ifelse(mynew_data$Year == 2004,225938595, ifelse(mynew_data$Year == 2005,228805144, ifelse(mynew_data$Year == 2006,231797427, ifelse(mynew_data$Year == 2007,234858289, ifelse(mynew_data$Year == 2008,237936543, ifelse(mynew_data$Year == 2009,240981299, ifelse(mynew_data$Year == 2010,244016173, ifelse(mynew_data$Year == 2011, 247099697, ifelse(mynew_data$Year == 2012, 250222695
+, ifelse(mynew_data$Year == 2013, 253275918
+, ifelse(mynew_data$Year == 2014, 256229761
+, ifelse(mynew_data$Year == 2015, 259091970
+, ifelse(mynew_data$Year == 2016, 261850182
+, ifelse(mynew_data$Year == 2017, 264498852
+, ifelse(mynew_data$Year == 2018, 267066843
+, ifelse(mynew_data$Year == 2019, 269582878
+, ifelse(mynew_data$Year == 2020, 271857970
+, ifelse(mynew_data$Year == 2021, 273753191
+, ifelse(mynew_data$Year == 2022, 275501339, mynew_data$Year)))))))))))))))))))))))
+```
+
+```{r}
+mynew_data$Population <- pop_values
+```
+
+
+Here we add one more column, named 'population', because we think it can help in extracting information or finding patterns that might be useful from the dataframe so that we can know the percentage of deaths from the total population.
+
+```{r}
+plot(mynew_data)
+```
+
+Based on the plot above, the average variable has a non-linear relationship, only the Year and population variables have a correlation with each other. Therefore, we decided to use decision tree to model the predictive model in this case. Because decision trees can handle non-linear relationships better than logistics regression.
+
+
+```{r}
+#plot(mynew_data$Year,mynew_data$Population)
+plot(mynew_data$Year, mynew_data$Population, type = "l", lwd = 2, col = "blue",
+     xlab = "Year", ylab = "Population", main = "Population Growth Over Years")
+```
+
+There is a positive correlation between year and population where as the year increases, the population will increase.
+
+
+```{r}
+#plot(mynew_data$Type,xlab = "Type of disaster", ylab = "Frequency")
+barplot(table(mynew_data$Type), col = "skyblue", main = "Frequency of Different Types of Disasters", xlab = "Type of Disaster", ylab = "Frequency", cex.names = 0.8)
+```
+
+The barplot provides a visual representation of the frequencies, allowing us to identify which types of disasters occur more frequently. This information can be valuable for understanding the dataset and identifying patterns or trends related to different disaster types.
+
+```{r}
+freq <- table(mynew_data$Type)
+boxplot(freq, ylab = "Value",main = "Descriptive Statistics of Type Variable", col = "blue")
+median_value <- median(freq)
+
+points(1, median_value, col = "red", pch = 19)
+segments(0.8, median_value, 1.2, median_value, col = "red")
+
+legend("topright", legend = "Median", col = "red", pch = 19, lty = 1)
+text(1, median_value, median_value, pos = 3, col = "black")
+```
+
+This boxplot helps to see the differences and similarities between disaster types, as well as identify the presence of a median value that indicates the midpoint of the frequency distribution.
+
+```{r}
+mean(freq)
+median(freq)
+```
+
+The mean and median provide additional summary statistics that give insight into the central tendency of the frequency distribution.
+
+```{r}
+plot(table(mynew_data$Year), ylab = "Count", xlab = "Year", main = "Count of Years", col = "blue", pch = 16)
+```
+
+The plot above displays the number of years (count) on the y-axis and years (Year) on the x-axis, the plot provides information about the distribution of the amount of data for each year in the dataset.
+
+
+# DATA PREPROCESSING
+
+```{r}
+table(mynew_data$Type)
+```
+
+This case is classified as a multiclass classification case where the target class/label is not binary (only 2 targets).
+There is another problem here which is imbalance dataset/target where the frequncies of the labels are disproportionate or not welly distributed with the other labels. 
+Since the count of "Bencana Sosial" is very low and we cannot add more data, we decided to discard the label "social disasters" and convert this problem into a binary classification to classify natural disasters or non-natural disasters only.
+
+```{r}
+mynew_datamodel <- mynew_data[mynew_data$Type %in% c("Bencana Alam", "Bencana Non Alam dan Penyakit"), ]
+```
+
+```{r}
+mynew_datamodel$Type <- droplevels(mynew_datamodel$Type)
+```
+
+```{r}
+barplot(table(mynew_datamodel$Type), col = "skyblue", main = "Frequency of Different Types of Disasters", xlab = "Type of Disaster", ylab = "Frequency", cex.names = 0.8)
+```
+
+```{r}
+table(mynew_datamodel$Year)
+```
+
+Now the type variable only has 2 values, namely "Bencana Alam" & "Bencana Non Alam dan Penyakit" so that we can process it to make a binary prediction model using a decision tree.
+
+```{r}
+dim(mynew_datamodel)
+```
+```{r}
+table(mynew_datamodel$Type)
+```
+
+```{r}
+library(rpart)
+library(rpart.plot)
+```
+load library decision tree
+
+```{r}
+#TRAINING FOR NON SCALING
+set.seed(123)
+
+n <- nrow(mynew_datamodel)
+train <- sample(n, round(0.8 * n))
+DfTrain <- mynew_datamodel[train,]
+DfValidation <- mynew_datamodel[-train,]
+```
+
+Splitting data where training data uses 80% of the total data and validation data uses 20%.
+
+```{r}
+dcAlgoFull <- rpart(Type ~ . , data = DfTrain, method = "class")
+print(dcAlgoFull$variable.importance)
+```
+
+The significance/importance values of the variables "Population" and "Year" are identical due to their perfect correlation coefficient of one. This is because we using the year as a parameter for mapping when inputting the population. 
+
+```{r}
+PredictDTfull <- predict(dcAlgoFull, DfValidation, type = "class")
+cm <- table(PredictDTfull, DfValidation$Type)
+
+accuracy <- sum(cm[1], cm[4]) / sum(cm[1:4])
+cm
+sprintf("Accuracy DECISION TREE model %s", round(accuracy,2))
+```
+
+Because there is the same significance/importance variable value, we try to create a new model that uses "Year" and "Total.Deaths variables". 
+And the evaluation results given to the model that uses one of these variables has the same performance as the one that uses the full variable.
+
+Here are the steps to create the model:
+
+```{r}
+dcAlgo <- rpart(Type ~ Year + Total.Deaths , data = DfTrain, method = "class")
+print(dcAlgo$variable.importance)
+```
+
+```{r}
+
+rpart.plot(dcAlgo, extra = 1, box.palette = "Blues", nn = TRUE, type = 3, fallen.leaves = TRUE, main = "Model Decision Tree")
+
+```
+
+This decision tree model, can understand how the feature variables (Year and Total.Deaths) are used to divide the data into different nodes in the decision tree, as well as see which variables have a greater influence in predicting the target class. The decision tree plot also provides a visual view that helps in understanding and explaining the logic it follows in making predictions.
+
+```{r}
+PredictDT <- predict(dcAlgo, DfValidation, type = "class")
+```
+
+```{r}
+cm <- table(PredictDT, DfValidation$Type)
+
+accuracy <- sum(cm[1], cm[4]) / sum(cm[1:4])
+cm
+sprintf("Accuracy DECISION TREE model %s", round(accuracy,2))
+```
+# Confussion matrix
+-. True Positive (TP): The amount of data that was correctly predicted as "Bencana Alam" by the model (7 in this case).
+
+-. False Negative (FN): The number of data that should have been classified as "Bencana Alam" but were incorrectly predicted as "Bencana Non Alam dan Penyakit" by the model (16 in this case).
+
+-. False Positive (FP): The amount of data that should have been classified as "Bencana Non Alam dan Penyakit" but was incorrectly predicted as "Bencana Alam" by the model (20 in this case).
+
+-. True Negative (TN): The amount of data that was correctly predicted as "Bencana Non Alam dan Penyakit" by the model (89 in this case).
+
+The model's performance can be considered quite good, as it achieves an accuracy of 73% on the test set.
+However, we were not satisfied with the results, so we tried to optimise the model. 
+Here are the experiments we did:
+
+```{r}
+library(qqplotr)
+```
+# EDA2
+
+```{r}
+names(mynew_datamodel)
+```
+
+```{r}
+par(mfrow = c(1,2))
+qqnorm(mynew_datamodel$Total.Death,main="Normality of Total.Death")
+qqline(mynew_datamodel$Total.Death)
+qqnorm(mynew_datamodel$Year,main="Normality of Year")
+qqline(mynew_datamodel$Year)
+```
+
+# Analysis:
+1. The variable "total.death" is not normally distributed: 
+This can indicate that the data does not follow a regular pattern or symmetry that generally occurs in a normal distribution. Possibly, there are some other factors or variables that affect the value of "total.death" and cause the data distribution to be abnormal. For example, there could be some events that cause unexpected or irregular deaths such as the difference in scale between high and low number of deaths due to the Covid-19 pandemic, so the data is skewed or not normally distributed.
+
+2. The variable "year" shows a normal distribution pattern but there are many outliers: Although the data on the variable "year" shows a distribution pattern similar to a normal distribution, there are many outliers seen in the data. In this context, outliers in the "year" variable indicate years that have extreme values or are significantly different from other years in the dataset. 
+
+However, here we decided to dont drop the outliers due to this the following reasons:
+
+-. Significance of the data:
+Outliers may represent important events or conditions in the dataset By removing outliers, it may miss important information or significant effects of the variable.
+
+-. Representation of unusual events: 
+In some cases, outliers may represent unusual or rare events or circumstances. If the purpose of the analysis is to understand or explore rare events, retaining outliers may provide valuable insights.
+
+-. Small sample size: 
+If have a small sample size, outliers may have a relatively large impact on the overall analysis. In this case, removal of outliers may provide a very significant change and not represent the true case in the analysis results.
+
+
+```{r}
+scaled_data <- mynew_datamodel
+```
+# NORMALIZATION/SCALING
+
+We apply normalization/scaling techniques which are often used to improve the performance of a model.
+
+```{r}
+scaled_data[2:4] <- scale(mynew_datamodel[2:4])
+```
+
+```{r}
+head(scaled_data)
+```
+splitting scaled data
+
+```{r}
+set.seed(123)
+
+n <- nrow(scaled_data)
+train <- sample(n, round(0.8 * n))
+DfTrainS <- scaled_data[train,]
+DfValidationS <- scaled_data[-train,]
+```
+
+```{r}
+dcAlgoS <- rpart(Type ~ Year + Total.Deaths , data = DfTrainS, method = "class")
+print(dcAlgoS$variable.importance)
+```
+
+```{r}
+rpart.plot(dcAlgoS, extra = 1, box.palette = "green", nn = TRUE, type = 3, fallen.leaves = TRUE, main = "Scalled Model Decision Tree")
+```
+```{r}
+PredictDTS <- predict(dcAlgoS, DfValidationS, type = "class")
+```
+
+```{r}
+cm <- table(PredictDTS, DfValidationS$Type)
+
+accuracy <- sum(cm[1], cm[4]) / sum(cm[1:4])
+cm
+sprintf("Accuracy DECISION TREE with scaled model %s", round(accuracy,2))
+```
+
+Although it has been scaled but still the accuracy value does not change this is because this method does not require normalisation or scaling of data, decision trees can handle numerical and categorical data without the need for transformation. On the contrary, data scaling is not required or recommended for decision tree because it can change the data distribution.
+
+
+## Conclusion:
+
+The overall conclusion of this project is that by going through the steps of EDA, data preprocessing, and modelling, we managed to build a predictive model with a relatively good accuracy of 73% using 80% train and 20% validation data. This model uses the variables "Total Death" and "Year" as input features because we consider this is the most efficient input. 
+Evaluation results using confusion matrix show that the model has 7 True Positives (data correctly predicted as "Natural Disasters"), 16 False Negatives (data that should be "Natural Disasters" but incorrectly predicted as "Non-Natural Disasters and Diseases"), 20 False Positives (data that should be "Non-Natural Disasters and Diseases" but incorrectly predicted as "Natural Disasters"), and 89 True Negatives (data correctly predicted as "Non-Natural Disasters and Diseases").
+Although the accuracy of the model is relatively good, it is still recommended to conduct a more thorough assessment of the possibility of overfitting or underfitting. By conducting this additional evaluation, we can gain a more comprehensive understanding of the performance and reliability of the model.
